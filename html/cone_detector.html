@@ -1,0 +1,99 @@
+<!doctype html>
+<html ng-app>
+	<head>
+		<meta charset="utf-8" />
+		<!--script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script-->
+		<script src="jquery.min.js"></script>
+		<script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+		<script src="jslib/roslib.js"></script>
+		<link rel="stylesheet" href="victoria.css">
+		<script type="text/javascript">
+			function main() {
+				ros = new ROSLIB.Ros({
+					url : 'ws://xmyx.com:9090'
+				});
+
+				var alow_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_hue_' });
+				var ahigh_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/ahigh_hue_' });
+				var alow_saturation_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_saturation_' });
+				var ahigh_saturation_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/ahigh_saturation_' });
+				var alow_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_value_' });
+				var ahigh_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/ahigh_value_' });
+
+				alow_hue_.get(function(value) { document.getElementById("alow_hue_").innerHTML = value; });
+				ahigh_hue_.get(function(value) { document.getElementById("ahigh_hue_").innerHTML = value; });
+				alow_saturation_.get(function(value) { document.getElementById("alow_saturation_").innerHTML = value; });
+				ahigh_saturation_.get(function(value) { document.getElementById("ahigh_saturation_").innerHTML = value; });
+				alow_value_.get(function(value) { document.getElementById("alow_value_").innerHTML = value; });
+				ahigh_value_.get(function(value) { document.getElementById("ahigh_value_").innerHTML = value; });
+
+				var blow_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/blow_hue_' });
+				var bhigh_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/bhigh_hue_' });
+				var blow_saturation_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/blow_saturation_' });
+				var bhigh_saturation_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/bhigh_saturation_' });
+				var blow_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/blow_value_' });
+				var bhigh_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/bhigh_value_' });
+
+				blow_hue_.get(function(value) { document.getElementById("blow_hue_").innerHTML = value; });
+				bhigh_hue_.get(function(value) { document.getElementById("bhigh_hue_").innerHTML = value; });
+				blow_saturation_.get(function(value) { document.getElementById("blow_saturation_").innerHTML = value; });
+				bhigh_saturation_.get(function(value) { document.getElementById("bhigh_saturation_").innerHTML = value; });
+				blow_value_.get(function(value) { document.getElementById("blow_value_").innerHTML = value; });
+				bhigh_value_.get(function(value) { document.getElementById("bhigh_value_").innerHTML = value; });
+			}
+		</script>
+	</head>
+   
+	<body onload="main()">
+		<div>
+			<img src="http://xmyx.com:8080/stream?topic=/cone_detector/annotated_image" />
+			<table>
+				<tr>
+					<td>
+						<table style="cone_detector_table">
+						<tr>
+							<th>Param</th>
+							<th>Value</th>
+							<th>Param</th>
+							<th>Value</th>
+						</tr>
+						<tr>
+							<td class="bold_cell">alow_hue</td><td class="data_cell" id="alow_hue_"/>
+							<td class="bold_cell">ahigh_hue</td><td class="data_cell" id="ahigh_hue_"/>
+						</tr>
+						<tr>
+							<td class="bold_cell">alow_saturation</td><td class="data_cell" id="alow_saturation_"/>
+							<td class="bold_cell">ahigh_saturation</td><td class="data_cell" id="ahigh_saturation_"/>
+						</tr>
+						<tr>
+							<td class="bold_cell">alow_value</td><td class="data_cell" id="alow_value_"/>
+							<td class="bold_cell">ahigh_value"</td><td class="data_cell" id="ahigh_value_"/>
+						</tr>
+						</table>
+					</td>
+					<td>
+						<table style="cone_detector_table">
+						<tr>
+							<th>Param</th>
+							<th>Value</th>
+							<th>Param</th>
+							<th>Value</th>
+						</tr>
+						<tr>
+							<td class="bold_cell">blow_hue</td><td class="data_cell" id="blow_hue_"/>
+							<td class="bold_cell">bhigh_hue</td><td class="data_cell" id="bhigh_hue_"/>
+						</tr>
+						<tr>
+							<td class="bold_cell">blow_saturation</td><td class="data_cell" id="blow_saturation_"/>
+							<td class="bold_cell">bhigh_saturation</td><td class="data_cell" id="bhigh_saturation_"/>
+						</tr>
+						<tr>
+							<td class="bold_cell">blow_value</td><td class="data_cell" id="blow_value_"/>
+							<td class="bold_cell">bhigh_value"</td><td class="data_cell" id="bhigh_value_"/>
+						</tr>
+						</table>
+					</td>
+				</tr>
+		</div>
+	</body>
+</html>

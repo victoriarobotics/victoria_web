@@ -1,0 +1,28 @@
+table {
+	border-collapse: collapse;
+}
+
+table, th, td {
+	border: 1px solid black;
+}
+
+td.bold_cell {
+	font-weight: bold;
+}
+
+td.data_cell {
+	font-family: "Courier New";
+	text-align: right;
+}
+
+th {
+    text-align: left;
+}
+
+th, td {
+    padding: 5px;
+}
+
+cone_detector_table {
+
+}
