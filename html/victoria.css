@@ -15,6 +15,10 @@ td.data_cell {
 	text-align: right;
 }
 
+td.histogram_data_cell {
+	width: 800px;
+}
+
 th {
     text-align: left;
 }
