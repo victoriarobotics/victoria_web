@@ -8,6 +8,8 @@
     <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.js"></script>
     <link rel="stylesheet" href="victoria.css">
     <script type="text/javascript">
+      var ros;
+
       function DumpObjectIndented(obj, indent)
       {
         var result = "";
@@ -197,13 +199,59 @@
           }
       }
 
+      var alow_hue_;
+      var ahigh_hue_;
+      var alow_saturation_;
+      var ahigh_saturation_;
+      var alow_value_;
+      var ahigh_value_;
+      var blow_hue_;
+      var bhigh_hue_;
+      var blow_saturation_;
+      var bhigh_saturation_;
+      var blow_value_;
+      var bhigh_value_;
+
+      function getConeDetectorParams() {
+        alow_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_hue_' });
+        ahigh_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/ahigh_hue_' });
+        alow_saturation_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_saturation_' });
+        ahigh_saturation_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/ahigh_saturation_' });
+        alow_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_value_' });
+        ahigh_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/ahigh_value_' });
+
+        alow_hue_.get(function(value) { document.getElementById("alow_hue_").innerHTML = value; });
+        ahigh_hue_.get(function(value) { document.getElementById("ahigh_hue_").innerHTML = value; });
+        alow_saturation_.get(function(value) { document.getElementById("alow_saturation_").innerHTML = value; });
+        ahigh_saturation_.get(function(value) { document.getElementById("ahigh_saturation_").innerHTML = value; });
+        alow_value_.get(function(value) { document.getElementById("alow_value_").innerHTML = value; });
+        ahigh_value_.get(function(value) { document.getElementById("ahigh_value_").innerHTML = value; });
+
+        blow_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/blow_hue_' });
+        bhigh_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/bhigh_hue_' });
+        blow_saturation_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/blow_saturation_' });
+        bhigh_saturation_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/bhigh_saturation_' });
+        blow_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/blow_value_' });
+        bhigh_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/bhigh_value_' });
+
+        blow_hue_.get(function(value) { document.getElementById("blow_hue_").innerHTML = value; });
+        bhigh_hue_.get(function(value) { document.getElementById("bhigh_hue_").innerHTML = value; });
+        blow_saturation_.get(function(value) { document.getElementById("blow_saturation_").innerHTML = value; });
+        bhigh_saturation_.get(function(value) { document.getElementById("bhigh_saturation_").innerHTML = value; });
+        blow_value_.get(function(value) { document.getElementById("blow_value_").innerHTML = value; });
+        bhigh_value_.get(function(value) { document.getElementById("bhigh_value_").innerHTML = value; });
+
+      }
+
     	function main() {
-        document.getElementById('busyDiv').style.display = 'block';
-        document.getElementById('errorDiv').style.display = 'none';
-        document.getElementById('nonErrorDiv').style.display = 'none';
         ros = new ROSLIB.Ros({
           url : 'ws:/xmyx.com:9090'
         });
+       document.getElementById('busyDiv').style.display = 'block';
+        document.getElementById('errorDiv').style.display = 'none';
+        document.getElementById('nonErrorDiv').style.display = 'none';
+
+        getConeDetectorParams();
 
         var kmeansActionClient = new ROSLIB.ActionClient({
           ros : ros,
@@ -246,6 +294,7 @@
           feedbackTable.innerHTML = computeKmeansTableRows();
           computeHistogramPlot();
           document.getElementById('KmeansAnnotatedImage').style.display = 'block';
+          document.getElementById('KmeansAnnotatedImage').src="http://xmyx.com:8080/snapshot?topic=/kmeans/annotated_image&width=640&height=480";
         });
 
         ros.on('connection', function() {
@@ -266,7 +315,7 @@
         goal.send();      
     	}
 
-      </script>
+    </script>
   </head>   
   <body onload="main()">
     <div class="errorDiv" id="errorDiv" style="display:none"/>Unable to connect to ROS and servers</div>
@@ -274,12 +323,63 @@
     <div id="nonErrorDiv" style="display:none">
       <table>
         <tr>
-          <td><img id="KmeansAnnotatedImage" style="display:none" src="http://xmyx.com:8080/snapshot?topic=/kmeans/annotated_image&width=640&height=480"/></td>
+          <td><img id="KmeansAnnotatedImage" style="display:none"/></td>
           <td><img id="ConeDetectorAnnotatedImage" src="http://xmyx.com:8080/stream?topic=/cone_detector/annotated_image&width=640&height=480" /></td>
         </tr>
         <tr>
-          <td><table id="KmeansTable"></table></td>
-          <td><table id="ConeDetectorTable"></table></td>
+          <td style="vertical-align: top"><table id="KmeansTable"></table></td>
+          <td style="vertical-align: top">
+            <table class="cone_detector_table">
+              <tr>
+                <td>
+                  <table>
+                    <tr>
+                      <th>Param</th>
+                      <th>Value</th>
+                      <th>Param</th>
+                      <th>Value</th>
+                    </tr>
+                    <tr>
+                      <td class="bold_cell">alow_hue</td><td class="data_cell" id="alow_hue_"/>
+                      <td class="bold_cell">ahigh_hue</td><td class="data_cell" id="ahigh_hue_"/>
+                    </tr>
+                    <tr>
+                      <td class="bold_cell">alow_saturation</td><td class="data_cell" id="alow_saturation_"/>
+                      <td class="bold_cell">ahigh_saturation</td><td class="data_cell" id="ahigh_saturation_"/>
+                    </tr>
+                    <tr>
+                      <td class="bold_cell">alow_value</td><td class="data_cell" id="alow_value_"/>
+                      <td class="bold_cell">ahigh_value"</td><td class="data_cell" id="ahigh_value_"/>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="vertical-align: top">
+                  <table>
+                  <tr>
+                    <th>Param</th>
+                    <th>Value</th>
+                    <th>Param</th>
+                    <th>Value</th>
+                  </tr>
+                  <tr>
+                    <td class="bold_cell">blow_hue</td><td class="data_cell" id="blow_hue_"/>
+                    <td class="bold_cell">bhigh_hue</td><td class="data_cell" id="bhigh_hue_"/>
+                  </tr>
+                  <tr>
+                    <td class="bold_cell">blow_saturation</td><td class="data_cell" id="blow_saturation_"/>
+                    <td class="bold_cell">bhigh_saturation</td><td class="data_cell" id="bhigh_saturation_"/>
+                  </tr>
+                  <tr>
+                    <td class="bold_cell">blow_value</td><td class="data_cell" id="blow_value_"/>
+                    <td class="bold_cell">bhigh_value"</td><td class="data_cell" id="bhigh_value_"/>
+                  </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
         </tr>
       </table>
     </div>      
