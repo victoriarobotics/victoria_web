@@ -57,75 +57,42 @@
       function createCheckboxText(cluster) {
         var checkBoxId = 'cb' + getPlotDivName(cluster);
         return '<input type="checkbox" hist="' +
-                getPlotDivName(cluster) + '" id="' + checkBoxId + '"  onchange="showHideHistogram(this)"/>' +
-                '<label for="' + checkBoxId + '">Histograms</label>'
+                getPlotDivName(cluster) + '" id="' + checkBoxId + '"  onchange="showHideHistogram(this)"/>';
       }
 
       var CHART_HEIGHT = 80;
+      var feedbackChannel0 = [];
+      var feedbackChannel1 = [];
+      var feedbackChannel2 = [];
 
-    	function main() {
-        document.getElementById('KmeansAnnotatedImage').style.display = 'none';
-        ros = new ROSLIB.Ros({
-          url : 'ws:/xmyx.com:9090'
-        });
+      function computeKmeansTableRows() {
+        var feedbackRows = '<tr><th>M</th><th>Statistics</th></tr>';
+        for (cluster = 0; cluster < feedbackChannel0.length; cluster++) {
+          var fb0 = feedbackChannel0[cluster];
+          var fb1 = feedbackChannel1[cluster];
+          var fb2 = feedbackChannel2[cluster];
+          var cellText = 
+            '<b style="color: rgb(31, 119, 180)">hue:</b> [' + fb0.min + '..' + fb0.max + '] ' +
+            ', <b style="color: rgb(255, 127, 14)">saturation:</b> [' + fb1.min + '..' + fb1.max + '] ' +
+            ', <b style="color: rgb(44, 168, 44)">value:</b> [' + fb2.min + '..' + fb2.max + '] ' +
+            ', <b>points: </b>' + fb0.selected_point_count;
+          feedbackRows += '<tr class="histogram_data_row"><td>X</td>' +
+                              '<td class="histogram_data_cell">' + 
+                                  cluster + 
+                                  ' ' + 
+                                  createCheckboxText(cluster) +
+                                  ' ' + 
+                                  cellText + 
+                               '</td>' +
+                          '</tr>' +
+                          '<tr class="histogram_data_row"><td></td><td><div id="' + getPlotDivName(cluster) + '" style="height: ' + CHART_HEIGHT + '; display: none"></td></tr>';
+        }
 
-        var kmeansActionClient = new ROSLIB.ActionClient({
-          ros : ros,
-          serverName : '/compute_kmeans',
-          actionName : 'victoria_perception/KmeansAction'
-        });
+        return feedbackRows;
+      }
 
-        console.log('Sending goal');
-        var goal = new ROSLIB.Goal({
-          actionClient : kmeansActionClient,
-          goalMessage : {
-            image_topic_name : '/usb_cam/image_raw',
-            number_clusters : 16,
-            resize_width : 320
-          }
-        });
-
-        var feedbackChannel0 = [];
-        var feedbackChannel1 = [];
-        var feedbackChannel2 = [];
-
-        goal.on('feedback', function(feedback) {
-          console.log('Feedback: ' + feedback.step);
-          var fb = JSON.parse(feedback.step);
-          if (fb.channel == 0) {
-            feedbackChannel0[fb.cluster] = fb;
-         } else if (fb.channel == 1) {
-            feedbackChannel1[fb.cluster] = fb;
-          } else if (fb.channel == 2) {
-            feedbackChannel2[fb.cluster] = fb;
-          }
-        });
-
-        goal.on('result', function(result) {
-          console.log('Final result_msg: ' + result.result_msg);
-          console.log('Final kmeans_result: ' + result.kmeans_result);
-          var feedbackRows = '<tr><th>Merge</th><th>Show</th><th>Cluster</th><th>Statistics</th></tr>';
-          for (cluster = 0; cluster < feedbackChannel0.length; cluster++) {
-            var fb0 = feedbackChannel0[cluster];
-            var fb1 = feedbackChannel1[cluster];
-            var fb2 = feedbackChannel2[cluster];
-            var cellText = 
-              '<b style="color: rgb(31, 119, 180)">hue:</b> [' + fb0.min + '..' + fb0.max + '] ' +
-              ', <b style="color: rgb(255, 127, 14)">saturation:</b> [' + fb1.min + '..' + fb1.max + '] ' +
-              ', <b style="color: rgb(44, 168, 44)">value:</b> [' + fb2.min + '..' + fb2.max + '] ' +
-              ', <b>points: </b>' + fb0.selected_point_count;
-            feedbackRows += '<tr><td>X</td>' +
-                                '<td>' + createCheckboxText(cluster) + '</td>' +
-                                '<td>' + cluster + '</td>' +
-                                '<td class="histogram_data_cell">' + cellText + '</td>' +
-                            '</tr>' +
-                            '<tr><td></td><td></td><td></td><td><div id="' + getPlotDivName(cluster) + '" style="height: ' + CHART_HEIGHT + '; display: none"></td></tr>';
-          }
-
-          var feedbackTable = document.getElementById("FeedbackTable");
-          feedbackTable.innerHTML = feedbackRows;
-
-          for (cluster = 0; cluster < feedbackChannel0.length; cluster++) {
+      function computeHistogramPlot() {
+         for (cluster = 0; cluster < feedbackChannel0.length; cluster++) {
             var fb0 = feedbackChannel0[cluster];
             var fb1 = feedbackChannel1[cluster];
             var fb2 = feedbackChannel2[cluster];
@@ -156,7 +123,7 @@
             var satPlot = {
               dx: 1,
               line: { color: 'rgb(255, 127, 14)' },
-              name: 'saturation',
+              name: 'sat',
               type: 'scatter',
               y: satY,
             };
@@ -164,20 +131,20 @@
             var valPlot = {
               dx: 1,
               line: { color: 'rgb(44, 168, 44)' },
-              name: 'value',
+              name: 'val',
               type: 'scatter',
               y: valY,
             };
 
             var layout = {
               autosize: false,
-              height: 150,
+              height: 160,
               margin: {
                 b: 30,
                 l: 40,
-                pad: 4,
+                //pad: 4,
                 r: 10,
-                t: 10
+                t: 0
               },
               shapes: [
                 {
@@ -217,17 +184,68 @@
 
                 }
               ],
-              width: 800,
+              width: 600,
               xaxis: {
                 dtick: 10
+              },
+              yaxis: {
+                title: 'Pixels'
               }
             };
 
             Plotly.newPlot(getPlotDivName(cluster), [huePlot, satPlot, valPlot], layout);
           }
+      }
 
+    	function main() {
+        document.getElementById('busyDiv').style.display = 'block';
+        document.getElementById('errorDiv').style.display = 'none';
+        document.getElementById('nonErrorDiv').style.display = 'none';
+        ros = new ROSLIB.Ros({
+          url : 'ws:/xmyx.com:9090'
+        });
+
+        var kmeansActionClient = new ROSLIB.ActionClient({
+          ros : ros,
+          serverName : '/compute_kmeans',
+          actionName : 'victoria_perception/KmeansAction'
+        });
+
+        var goal = new ROSLIB.Goal({
+          actionClient : kmeansActionClient,
+          goalMessage : {
+            image_topic_name : '/usb_cam/image_raw',
+            number_clusters : 16,
+            resize_width : 320
+          }
+        });
+
+        feedbackChannel0 = [];
+        feedbackChannel1 = [];
+        feedbackChannel2 = [];
+
+        goal.on('feedback', function(feedback) {
+          console.log('Feedback: ' + feedback.step);
+          var fb = JSON.parse(feedback.step);
+          if (fb.channel == 0) {
+            feedbackChannel0[fb.cluster] = fb;
+         } else if (fb.channel == 1) {
+            feedbackChannel1[fb.cluster] = fb;
+          } else if (fb.channel == 2) {
+            feedbackChannel2[fb.cluster] = fb;
+          }
+        });
+
+        goal.on('result', function(result) {
+          document.getElementById('busyDiv').style.display = 'none';
+          document.getElementById('errorDiv').style.display = 'none';
+          document.getElementById('nonErrorDiv').style.display = 'block';
+          console.log('Final result_msg: ' + result.result_msg);
+          console.log('Final kmeans_result: ' + result.kmeans_result);
+          var feedbackTable = document.getElementById("KmeansTable");
+          feedbackTable.innerHTML = computeKmeansTableRows();
+          computeHistogramPlot();
           document.getElementById('KmeansAnnotatedImage').style.display = 'block';
-          document.getElementById('KmeansAnnotatedImage').src="http://xmyx.com:8080/snapshot?topic=/kmeans/annotated_image"
         });
 
         ros.on('connection', function() {
@@ -236,6 +254,9 @@
 
         ros.on('error', function(error) {
           console.log('Error connecting to websocket server: ', error);
+          document.getElementById('busyDiv').style.display = 'none';
+          document.getElementById('errorDiv').style.display = 'block';
+          document.getElementById('nonErrorDiv').style.display = 'none';
         });
 
         ros.on('close', function() {
@@ -246,13 +267,21 @@
     	}
 
       </script>
-   </head>   
-   <body onload="main()">
-      <img id="KmeansAnnotatedImage" style=display:none" />
-      <div>
-        <table id="FeedbackTable">
-        </table>
-      </div>
-      
-   </body>
+  </head>   
+  <body onload="main()">
+    <div class="errorDiv" id="errorDiv" style="display:none"/>Unable to connect to ROS and servers</div>
+    <div class="busyDiv" id="busyDiv" style="display:none"/>Busy talking to the k-means service</div>
+    <div id="nonErrorDiv" style="display:none">
+      <table>
+        <tr>
+          <td><img id="KmeansAnnotatedImage" style="display:none" src="http://xmyx.com:8080/snapshot?topic=/kmeans/annotated_image&width=640&height=480"/></td>
+          <td><img id="ConeDetectorAnnotatedImage" src="http://xmyx.com:8080/stream?topic=/cone_detector/annotated_image&width=640&height=480" /></td>
+        </tr>
+        <tr>
+          <td><table id="KmeansTable"></table></td>
+          <td><table id="ConeDetectorTable"></table></td>
+        </tr>
+      </table>
+    </div>      
+  </body>
 </html>

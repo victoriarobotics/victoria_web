@@ -1,3 +1,14 @@
+.busyDiv {
+	color: black;
+	font-size: 24pt;
+	font-weight: bold;
+}
+.errorDiv {
+	color: red;
+	font-size: 24pt;
+	font-weight: bold;
+}
+
 table {
 	border-collapse: collapse;
 }
@@ -16,7 +27,7 @@ td.data_cell {
 }
 
 td.histogram_data_cell {
-	width: 800px;
+	width: 600px;
 }
 
 th {
@@ -27,6 +38,10 @@ th, td {
     padding: 5px;
 }
 
-cone_detector_table {
+tr.histogram_data_row {
+//	width: 651px;
+}
+
+.cone_detector_table {
 
 }
