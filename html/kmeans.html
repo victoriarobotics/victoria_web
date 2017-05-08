@@ -2,11 +2,13 @@
 <html>
    
   <head>
-    <script src="jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script src="rangeslider.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.js"></script>
     <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.js"></script>
     <link rel="stylesheet" href="victoria.css">
+    <link rel="stylesheet" href="rangeslider.css">
     <script type="text/javascript">
       var ros;
 
@@ -45,9 +47,9 @@
 
       function showHideHistogram(checkBoxElement) {
         var histChartId = checkBoxElement.attributes['hist'].value;
-        console.log("checked, id: " + checkBoxElement.id + ', hist id: ' + histChartId);
+        //console.log("checked, id: " + checkBoxElement.id + ', hist id: ' + histChartId);
         var histogramChart = document.getElementById(histChartId);
-        console.log('histogramChart: ' + histogramChart);
+        //console.log('histogramChart: ' + histogramChart);
         if (checkBoxElement.checked) histogramChart.style.display = 'block';
         else histogramChart.style.display = 'none';
       }
@@ -66,9 +68,10 @@
       var feedbackChannel0 = [];
       var feedbackChannel1 = [];
       var feedbackChannel2 = [];
+      var clusterColors = [];
 
       function computeKmeansTableRows() {
-        var feedbackRows = '<tr><th>M</th><th>Statistics</th></tr>';
+        var feedbackRows = '<tr><th>M</th><th style="white-space:nowrap">Statistics <span style="white-space:nowrap" id="status"></span> <span style="white-space:nowrap" id="hoverColor">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></th></tr>';
         for (cluster = 0; cluster < feedbackChannel0.length; cluster++) {
           var fb0 = feedbackChannel0[cluster];
           var fb1 = feedbackChannel1[cluster];
@@ -78,7 +81,7 @@
             ', <b style="color: rgb(255, 127, 14)">saturation:</b> [' + fb1.min + '..' + fb1.max + '] ' +
             ', <b style="color: rgb(44, 168, 44)">value:</b> [' + fb2.min + '..' + fb2.max + '] ' +
             ', <b>points: </b>' + fb0.selected_point_count;
-          feedbackRows += '<tr class="histogram_data_row"><td>X</td>' +
+          feedbackRows += '<tr class="histogram_data_row"><td bgcolor="#' + clusterColors[cluster].toString(16) + '">X</td>' +
                               '<td class="histogram_data_cell">' + 
                                   cluster + 
                                   ' ' + 
@@ -211,6 +214,10 @@
       var bhigh_saturation_;
       var blow_value_;
       var bhigh_value_;
+      
+      var canvas;
+      var img;
+      var statusDiv;
 
       function getConeDetectorParams() {
         alow_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_hue_' });
@@ -220,8 +227,8 @@
         alow_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_value_' });
         ahigh_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/ahigh_value_' });
 
-        alow_hue_.get(function(value) { document.getElementById("alow_hue_").innerHTML = value; });
-        ahigh_hue_.get(function(value) { document.getElementById("ahigh_hue_").innerHTML = value; });
+        alow_hue_.get(function(value) { $("#alow_hue_").val(value).change(); });
+        ahigh_hue_.get(function(value) { $("#ahigh_hue_").val(value).change(); });
         alow_saturation_.get(function(value) { document.getElementById("alow_saturation_").innerHTML = value; });
         ahigh_saturation_.get(function(value) { document.getElementById("ahigh_saturation_").innerHTML = value; });
         alow_value_.get(function(value) { document.getElementById("alow_value_").innerHTML = value; });
@@ -240,14 +247,13 @@
         bhigh_saturation_.get(function(value) { document.getElementById("bhigh_saturation_").innerHTML = value; });
         blow_value_.get(function(value) { document.getElementById("blow_value_").innerHTML = value; });
         bhigh_value_.get(function(value) { document.getElementById("bhigh_value_").innerHTML = value; });
-
       }
 
-    	function main() {
+      function main() {
         ros = new ROSLIB.Ros({
           url : 'ws:/xmyx.com:9090'
         });
-       document.getElementById('busyDiv').style.display = 'block';
+        document.getElementById('busyDiv').style.display = 'block';
         document.getElementById('errorDiv').style.display = 'none';
         document.getElementById('nonErrorDiv').style.display = 'none';
 
@@ -271,9 +277,10 @@
         feedbackChannel0 = [];
         feedbackChannel1 = [];
         feedbackChannel2 = [];
+        clusterColors = [];
 
         goal.on('feedback', function(feedback) {
-          console.log('Feedback: ' + feedback.step);
+          //console.log('Feedback: ' + feedback.step);
           var fb = JSON.parse(feedback.step);
           if (fb.channel == 0) {
             feedbackChannel0[fb.cluster] = fb;
@@ -288,13 +295,40 @@
           document.getElementById('busyDiv').style.display = 'none';
           document.getElementById('errorDiv').style.display = 'none';
           document.getElementById('nonErrorDiv').style.display = 'block';
-          console.log('Final result_msg: ' + result.result_msg);
-          console.log('Final kmeans_result: ' + result.kmeans_result);
+  //console.log('Final result_msg: ' + result.result_msg);
+  //console.log('Final kmeans_result: ' + result.kmeans_result);
+         var resultAsArray = JSON.parse(result.kmeans_result);
+  //console.log('resultAsArray: ' + DumpObjectIndented(resultAsArray));
+          for (i = 0; i < feedbackChannel0.length; i++) {
+            clusterColors[i] = (resultAsArray[i].color_rgb[0] * 256 * 256) + (resultAsArray[i].color_rgb[1] * 256) + resultAsArray[i].color_rgb[2];
+  //console.log('clusterColors[' + i + ']: ' + clusterColors[i] + ' =0x' + clusterColors[i].toString(16));
+          }
+
           var feedbackTable = document.getElementById("KmeansTable");
           feedbackTable.innerHTML = computeKmeansTableRows();
           computeHistogramPlot();
           document.getElementById('KmeansAnnotatedImage').style.display = 'block';
-          document.getElementById('KmeansAnnotatedImage').src="http://xmyx.com:8080/snapshot?topic=/kmeans/annotated_image&width=640&height=480";
+          document.getElementById('KmeansAnnotatedImage').src="http://xmyx.com:8080/snapshot?topic=/kmeans/annotated_image&width=640&height=480&quality=100" + '&' + new Date().getTime();
+          document.getElementById('KmeansAnnotatedImage').setAttribute('crossOrigin', '');
+          
+          statusDiv = document.getElementById('status');
+          img = document.getElementById('KmeansAnnotatedImage');
+          img.crossOrigin = "Anonymous";
+          function loaded() {
+            canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+          }
+
+          if (img.complete) {
+            loaded()
+          } else {
+            img.addEventListener('load', loaded)
+            img.addEventListener('error', function() {
+                alert('error')
+            });
+          } 
         });
 
         ros.on('connection', function() {
@@ -313,7 +347,25 @@
         });
 
         goal.send();      
-    	}
+      }
+
+function findPos(obj) {
+    var curleft = 0, curtop = 0;
+    if (obj.offsetParent) {
+        do {
+            curleft += obj.offsetLeft;
+            curtop += obj.offsetTop;
+        } while (obj = obj.offsetParent);
+        return { x: curleft, y: curtop };
+    }
+    return undefined;
+}
+
+function rgbToHex(r, g, b) {
+    if (r > 255 || g > 255 || b > 255)
+        throw "Invalid color component";
+    return ((r << 16) | (g << 8) | b).toString(16);
+}
 
     </script>
   </head>   
@@ -330,7 +382,7 @@
           <td style="vertical-align: top"><table id="KmeansTable"></table></td>
           <td style="vertical-align: top">
             <table class="cone_detector_table">
-              <tr>
+              <tr class="cone_detector_table_row">
                 <td>
                   <table>
                     <tr>
@@ -340,8 +392,14 @@
                       <th>Value</th>
                     </tr>
                     <tr>
-                      <td class="bold_cell">alow_hue</td><td class="data_cell" id="alow_hue_"/>
-                      <td class="bold_cell">ahigh_hue</td><td class="data_cell" id="ahigh_hue_"/>
+                      <td class="bold_cell">alow_hue</td>
+                      <td class="data_cell">
+                        <input type="number" id="alow_hue_" class="cone_detector_input" max="179">
+                      </td>
+                      <td class="bold_cell">ahigh_hue</td>
+                      <td class="data_cell">
+                        <input type="number" id="ahigh_hue_" class="cone_detector_input" max="179">
+                      </td>
                     </tr>
                     <tr>
                       <td class="bold_cell">alow_saturation</td><td class="data_cell" id="alow_saturation_"/>
@@ -354,7 +412,7 @@
                   </table>
                 </td>
               </tr>
-              <tr>
+              <tr class="cone_detector_table_row">
                 <td style="vertical-align: top">
                   <table>
                   <tr>
@@ -382,6 +440,33 @@
           </td>
         </tr>
       </table>
-    </div>      
+    </div>
+    <script>
+      var $document = $(document);
+      $("#KmeansAnnotatedImage").mousemove(function(e) {
+        var pos = findPos(this);
+        var x = e.pageX - pos.x;
+        var y = e.pageY - pos.y;
+        var coord = "x:" + x + ", y:" + y;
+        var c = canvas.getContext('2d');
+        var p = c.getImageData(x, y, 1, 1).data;
+        var hex = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6);
+        statusDiv.innerHTML = 'x:' + x + ', y:' + y + ' RGB color: ' + hex;
+        document.getElementById('hoverColor').style.backgroundColor = 'rgb(' + p[0] + ',' + p[1] + ', ' + p[2] + ')';
+      });
+
+      $document.on('change', '.cone_detector_input', function(e) {
+        var input_element = e.target;
+        //console.log('change: ' + input_element.id + ', value: ' + input_element.value + '. max: ' + input_element.max);
+        if (parseInt(input_element.value) > parseInt(input_element.max)) {
+          input_element.value = input_element.max;
+        }
+        if (parseInt(input_element.value) < 0) {
+          input_element.value = 0;
+        }
+        eval(input_element.id).set(parseInt(input_element.value));
+      });
+      //$(".cone_detector_input").on('change') {}
+    </script>   
   </body>
 </html>
