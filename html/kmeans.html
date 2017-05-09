@@ -219,6 +219,15 @@
       var img;
       var statusDiv;
 
+      var cone_detector_input_element_names = [
+        "alow_hue_", "ahigh_hue_",
+        "alow_saturation_", "ahigh_saturation_",
+        "alow_value_", "ahigh_value_",
+        "blow_hue_", "bhigh_hue_",
+        "blow_saturation_", "bhigh_saturation_",
+        "blow_value_", "bhigh_value_"
+      ];
+
       function getConeDetectorParams() {
         alow_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_hue_' });
         ahigh_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/ahigh_hue_' });
@@ -227,12 +236,12 @@
         alow_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/alow_value_' });
         ahigh_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/ahigh_value_' });
 
-        alow_hue_.get(function(value) { $("#alow_hue_").val(value).change(); });
-        ahigh_hue_.get(function(value) { $("#ahigh_hue_").val(value).change(); });
-        alow_saturation_.get(function(value) { document.getElementById("alow_saturation_").innerHTML = value; });
-        ahigh_saturation_.get(function(value) { document.getElementById("ahigh_saturation_").innerHTML = value; });
-        alow_value_.get(function(value) { document.getElementById("alow_value_").innerHTML = value; });
-        ahigh_value_.get(function(value) { document.getElementById("ahigh_value_").innerHTML = value; });
+        alow_hue_.get(function(value) { $("#alow_hue_").val(value).change();});
+        ahigh_hue_.get(function(value) { $("#ahigh_hue_").val(value).change();});
+        alow_saturation_.get(function(value) { $("#alow_saturation_").val(value).change();});
+        ahigh_saturation_.get(function(value) { $("#ahigh_saturation_").val(value).change();});
+        alow_value_.get(function(value) { $("#alow_value_").val(value).change();});
+        ahigh_value_.get(function(value) { $("#ahigh_value_").val(value).change();});
 
         blow_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/blow_hue_' });
         bhigh_hue_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/bhigh_hue_' });
@@ -241,13 +250,36 @@
         blow_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/blow_value_' });
         bhigh_value_ = new ROSLIB.Param({ ros : ros, name : '/cone_detector/bhigh_value_' });
 
-        blow_hue_.get(function(value) { document.getElementById("blow_hue_").innerHTML = value; });
-        bhigh_hue_.get(function(value) { document.getElementById("bhigh_hue_").innerHTML = value; });
-        blow_saturation_.get(function(value) { document.getElementById("blow_saturation_").innerHTML = value; });
-        bhigh_saturation_.get(function(value) { document.getElementById("bhigh_saturation_").innerHTML = value; });
-        blow_value_.get(function(value) { document.getElementById("blow_value_").innerHTML = value; });
-        bhigh_value_.get(function(value) { document.getElementById("bhigh_value_").innerHTML = value; });
+        blow_hue_.get(function(value) { $("#blow_hue_").val(value).change();});
+        bhigh_hue_.get(function(value) { $("#bhigh_hue_").val(value).change();});
+        blow_saturation_.get(function(value) { $("#blow_saturation_").val(value).change();});
+        bhigh_saturation_.get(function(value) { $("#bhigh_saturation_").val(value).change();});
+        blow_value_.get(function(value) { $("#blow_value_").val(value).change();});
+        bhigh_value_.get(function(value) { $("#bhigh_value_").val(value).change();});
       }
+
+      function setDynamicParam() {
+        var int_vals = [];
+        cone_detector_input_element_names.forEach(function(elem) {
+          if ($('#' + elem).val() == "") return;
+          int_vals.push({name: elem, value: parseInt($('#' + elem).val())});
+        });
+        var dynamicService = new ROSLIB.Service({
+          ros: ros,
+          name: '/cone_detector/set_parameters',
+          service_type: 'dynamic_reconfigure/ReconfigureRequest'
+        });
+ 
+        var request = new ROSLIB.ServiceRequest({
+          config: {
+              ints: int_vals
+          }
+        });
+
+        dynamicService.callService(request, function(result) {
+          //console.log('Result for service call');
+        });
+     }
 
       function main() {
         ros = new ROSLIB.Ros({
@@ -402,12 +434,24 @@ function rgbToHex(r, g, b) {
                       </td>
                     </tr>
                     <tr>
-                      <td class="bold_cell">alow_saturation</td><td class="data_cell" id="alow_saturation_"/>
-                      <td class="bold_cell">ahigh_saturation</td><td class="data_cell" id="ahigh_saturation_"/>
+                      <td class="bold_cell">alow_saturation</td>
+                      <td class="data_cell">
+                        <input type="number" id="alow_saturation_" class="cone_detector_input" max="255">
+                      </td>
+                      <td class="bold_cell">ahigh_saturation</td>
+                      <td class="data_cell">
+                        <input type="number" id="ahigh_saturation_" class="cone_detector_input" max="255">
+                      </td>
                     </tr>
                     <tr>
-                      <td class="bold_cell">alow_value</td><td class="data_cell" id="alow_value_"/>
-                      <td class="bold_cell">ahigh_value"</td><td class="data_cell" id="ahigh_value_"/>
+                      <td class="bold_cell">alow_value</td>
+                      <td class="data_cell">
+                        <input type="number" id="alow_value_" class="cone_detector_input" max="255">
+                      </td>
+                      <td class="bold_cell">ahigh_value</td>
+                      <td class="data_cell">
+                        <input type="number" id="ahigh_value_" class="cone_detector_input" max="255">
+                      </td>
                     </tr>
                   </table>
                 </td>
@@ -421,18 +465,36 @@ function rgbToHex(r, g, b) {
                     <th>Param</th>
                     <th>Value</th>
                   </tr>
-                  <tr>
-                    <td class="bold_cell">blow_hue</td><td class="data_cell" id="blow_hue_"/>
-                    <td class="bold_cell">bhigh_hue</td><td class="data_cell" id="bhigh_hue_"/>
-                  </tr>
-                  <tr>
-                    <td class="bold_cell">blow_saturation</td><td class="data_cell" id="blow_saturation_"/>
-                    <td class="bold_cell">bhigh_saturation</td><td class="data_cell" id="bhigh_saturation_"/>
-                  </tr>
-                  <tr>
-                    <td class="bold_cell">blow_value</td><td class="data_cell" id="blow_value_"/>
-                    <td class="bold_cell">bhigh_value"</td><td class="data_cell" id="bhigh_value_"/>
-                  </tr>
+                    <tr>
+                      <td class="bold_cell">blow_hue</td>
+                      <td class="data_cell">
+                        <input type="number" id="blow_hue_" class="cone_detector_input" max="179">
+                      </td>
+                      <td class="bold_cell">bhigh_hue</td>
+                      <td class="data_cell">
+                        <input type="number" id="bhigh_hue_" class="cone_detector_input" max="179">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="bold_cell">blow_saturation</td>
+                      <td class="data_cell">
+                        <input type="number" id="blow_saturation_" class="cone_detector_input" max="255">
+                      </td>
+                      <td class="bold_cell">bhigh_saturation</td>
+                      <td class="data_cell">
+                        <input type="number" id="bhigh_saturation_" class="cone_detector_input" max="255">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="bold_cell">blow_value</td>
+                      <td class="data_cell">
+                        <input type="number" id="blow_value_" class="cone_detector_input" max="255">
+                      </td>
+                      <td class="bold_cell">bhigh_value</td>
+                      <td class="data_cell">
+                        <input type="number" id="bhigh_value_" class="cone_detector_input" max="255">
+                      </td>
+                    </tr>
                   </table>
                 </td>
               </tr>
@@ -465,6 +527,7 @@ function rgbToHex(r, g, b) {
           input_element.value = 0;
         }
         eval(input_element.id).set(parseInt(input_element.value));
+        setDynamicParam();
       });
       //$(".cone_detector_input").on('change') {}
     </script>   
